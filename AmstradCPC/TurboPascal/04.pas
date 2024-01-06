@@ -243,7 +243,7 @@ Begin
   assert(true, trim('de ') = 'de');
 End;
 
-Function pointsOf(c: Card): integer;
+Function countMatches(c: Card): integer;
 Var 
   sum: integer;
   numWeHave: PNumberList;
@@ -251,16 +251,34 @@ Begin
   numWeHave := c.have;
   If c.have^.next = Nil Then Exit;
 
-  sum := 1; { we'll ignore youngest bit later }
+  sum := 0;
   Repeat
     numWeHave := numWeHave^.next;
     If contains(c.winning, numWeHave^.num) Then
       Begin
-        sum := sum shl 1;
+        { For part 1 of the task, it would be also just enough }
+        { If we started sum with 1, shift left by 1 bit here,  }
+        { and shift it right by 1 bit at the end.              }
+        sum := sum + 1;
       End { contains winning }
   Until numWeHave^.next = Nil;
+  countMatches := sum;
+End;
 
-  pointsOf := sum shr 1;
+Function pointsOf(c: Card): integer;
+Var 
+  matches: integer;
+  pts: integer;
+  i: integer;
+  numWeHave: PNumberList;
+Begin
+  matches := countMatches(c);
+  pts := 0;
+  If matches > 0 Then
+    Begin
+      pts := 1 shl (matches-1);
+    End;
+  pointsOf := pts;
 End;
 
 
@@ -282,6 +300,13 @@ Var
   c: Card;
   p: integer;
   total: real;
+  { part 2 vars }
+  cards: real;
+  copies: real;
+  cardsToMultiply: Array[0..24] Of real;
+  ctmIndex: byte;
+  i: byte;
+  idx: byte;
 Begin
   ClrScr();
   testList;
@@ -291,7 +316,17 @@ Begin
   Assign(inFile, '04.txt');
   Reset(inFile);
   total := 0;
+  cards := 0;
   p := 0;
+  ctmIndex := 0;
+  For i := 0 To 24 Do
+    Begin
+      If cardsToMultiply[i] <> 0 Then
+        Begin
+          WriteLn('Need to initialize arrays');
+          cardsToMultiply[i] := 0;
+        End;
+    End;
 
   { start looping through the file }
   While true Do
@@ -299,12 +334,44 @@ Begin
       c := ReadDay04Line(inFile);
       If c.have^.next = Nil Then
         break;
+      { Preview the card }
       PrintCard(c);
+
+      { Calc part 1 points }
       p := pointsOf(c);
-      WriteLn(p,' points.',chr(13),chr(10));
+      WriteLn(p,' points.');
       total := total + p;
+
+      { Part 2: get raw match number, count doubled cards }
+      p := countMatches(c);
+      WriteLn(p, ' matching numbers.');
+      { We have an array (no generic list implemented in TP, so...)  }
+      { of the next cards to double/triple, and by how much.         }
+      { To avoid the cost of shifting the entire array (we could use }
+      { a cyclic buffer, but that's more hops along the pointers and }
+      { we're doing plenty already), we have a index within the      }
+      { array pointing to "current" entry.                           }
+      cards := cards + 1; { count current card }
+      copies := cardsToMultiply[ctmIndex];
+      WriteLn('We also got it in ',copies:8:0,' extra copies');
+      cards := cards + copies; { and copies }
+      { update the number of copies for subsequent cards: }
+      { we will reuse 'copies' var here; it now means number of copies }
+      { that this card will *cause* in the subsequent cards            }
+      { (which is number of points times how many copies of it we got) }
+      copies := (copies+1);
+      WriteLn('It will win copies of ',p,' cards: ');
+      For i := 1 To p Do
+        Begin
+          idx := (ctmIndex + i) Mod 25;
+          cardsToMultiply[idx] := cardsToMultiply[idx] + copies;
+          Write(i + c.id, '(x', cardsToMultiply[idx]:8:0 ,'), ');
+        End;
+      WriteLn('', chr(13), chr(10));
+      cardsToMultiply[ctmIndex] := 0;
+      ctmIndex := (ctmIndex + 1) Mod 25;
     End;
   WriteLn('---');
-  WriteLn('Total:');
-  WriteLn(total:10:0);
+  WriteLn('Part 1 solution:',total:10:0);
+  WriteLn('Part 2 solution:',cards:10:0);
 End.
