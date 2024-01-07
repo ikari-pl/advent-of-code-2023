@@ -1,4 +1,6 @@
-
+{ Advent Of Code 2023, Day 04, parts 1 + 2 }
+{ Naive solution in procedural Free Pascal }
+{ (c)2024 ikari, RetroFun.PL               }
 Program day04;
 
 Uses crt;
