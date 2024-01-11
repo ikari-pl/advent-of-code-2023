@@ -11,9 +11,9 @@ Type
     num: integer;
    next: PNumberList;
   End;
-  LongString = string[200];
+  LongString = string[140];
 
-Function listToStr(l: PNumberList):LongString;
+Function listToStr(var l: PNumberList):LongString;
 Var
   n: string[10];
   s: string[200];
@@ -39,7 +39,7 @@ Card = Record
   have: PNumberList;
 End;
 
-Procedure printCard(c: Card);
+Procedure printCard(var c: Card);
 Begin
   WriteLn('Card ', c.id);
   WriteLn('Winning numbers: ', listToStr(c.winning));
@@ -56,7 +56,7 @@ Begin;
   last := last(list^.next);
 End;
 
-Procedure append(list: PNumberList; item: integer);
+Procedure append(var list: PNumberList; item: integer);
 Var
   newItem: PNumberList;
   lastItem: PNumberList;
@@ -68,15 +68,16 @@ Begin
   lastItem^.next := newItem;
 End;
 
-Procedure disposeList(list: PNumberList);
+Procedure disposeList(var list: PNumberList);
 Begin
-  If list <> nil Then Begin
+  If (list <> nil) and (list^.next <> nil) Then Begin
     disposeList(list^.next);
   End;
-  Dispose(list);
+  {if list <> nil then
+    Dispose(list);}
 End;
 
-Function contains(list: PNumberList; itemToFind: integer): boolean;
+Function contains(var list: PNumberList; itemToFind: integer): boolean;
 Var
   item: PNumberList;
 Begin
@@ -93,25 +94,22 @@ Begin
     End;
 End;
 
-Function simpleSplit(input: LongString; delimeter: char): PTwoStrings;
+Procedure simpleSplit(input: LongString; delimeter: char; var left: LongString; var right:LongString);
 Var
   splitAt: integer;
-  retVal: PTwoStrings;
 Begin
-  new(retVal);
   splitAt := Pos(delimeter, input);
   If splitAt = 0 Then
     Begin
-      retVal^[0] := input;
-      retVal^[1] := '';
+      left := input;
+      right := '';
       exit;
   End;
   If splitAt = 1 then
-    retVal^[0]:=''
+    left:=''
   Else
-    retVal^[0] := copy(input, 1, splitAt-1);
-  retVal^[1] := copy(input, splitAt+1,255);
-  simpleSplit:=retVal;
+    left := copy(input, 1, splitAt-1);
+  right := copy(input, splitAt+1,255);
 End;
 
 Function trim(input: LongString): LongString;
@@ -151,7 +149,7 @@ Else
 End;
 
 {
- Helper for tetsting - will print a dot for a passing assertion
+ Helper for testing - will print a dot for a passing assertion
  (almost like in Python), and a FAIL (and exit the program)
  if an assertion fails.
 }
@@ -169,7 +167,7 @@ Begin
 End;
 
 
-Function numbersInString(str: LongString): PNumberList;
+Function numbersInString(var str: LongString): PNumberList;
 Var
   pos: integer;
   l, i: integer;
@@ -225,8 +223,8 @@ End;
 { Reads one card from the file }
 Function readDay04Line(Var F: Text): PCard;
 Var
-  line: LongString;
-  parts: PTwoStrings;
+  line: string[116];
+  left, right: LongString;
   numbersWeHaveStr: LongString;
   winningNumbersStr: LongString;
   cardNoStr: string[4];
@@ -237,18 +235,21 @@ Var
   winningNumbers: PNumberList;
   haveNumbers: PNumberList;
 
+  s: string[100];
   retVal: PCard;
 Begin
-  new(retVal);
-  readDay04Line := retVal;
+  WriteLn(MemAvail);
   ReadLn(f, line);
-  parts := simpleSplit(line, '|');
-  numbersWeHaveStr := parts^[1];
+  WriteLn(line);
+  simpleSplit(line, '|', left, right);
+  WriteLn('a');
+  numbersWeHaveStr := right;
 
-  parts := simpleSplit(parts^[0], ':');
-  cardNoStr := trim(Copy(parts^[0], 5, 10));
-  winningNumbersStr := parts^[1];
-  Dispose(parts);
+  s := left;
+  simpleSplit(s, ':', left, right);
+  WriteLn('b');
+  cardNoStr := trim(Copy(left, 5, 10));
+  winningNumbersStr := Copy(right, 1, 255);
 
   { use built-in integer parser for once }
   Val(cardNoStr, cardNoInt, code);
@@ -257,28 +258,34 @@ Begin
     WriteLn('cardNoStr: "',cardNoStr,'", cardNoInt: ',cardNoInt,', code: ',code);
     halt;
   end;
+
+  WriteLn('allocating PCard');
+  WriteLn(MemAvail);
+  new(retVal);
+  WriteLn('allocated');
   winningNumbers := numbersInString(winningNumbersStr);
   haveNumbers := numbersInString(numbersWeHaveStr);
-
+             WriteLn('d');
   retVal^.id := cardNoInt;
   retVal^.winning := winningNumbers;
   retVal^.have := haveNumbers;
+  readDay04Line := retVal;
 End;
 
 Procedure testStrings;
 Var
   line: LongString;
-  twoLines: PTwoStrings;
+  left, right: LongString;
 Begin
   line := 'a|b';
-  twoLines := simpleSplit(line, '|');
-  assert(true, twoLines^[0]='a');
-  assert(true, twoLines^[1]='b');
+  simpleSplit(line, '|', left, right);
+  assert(true, left='a');
+  assert(true, right='b');
   assert(true, trim(' a ') = 'a');
   assert(true, trim('a') = 'a');
   assert(true, trim(' bc') = 'bc');
   assert(true, trim('de ') = 'de');
-  Dispose(twoLines);
+  WriteLn('PASS');
 End;
 
 Function countMatches(c: Card): integer;
@@ -326,6 +333,7 @@ Var
   testList: PNumberList;
 Begin
   new(testList); { testList := new(PNumberList); }
+  testList^.next := nil;
   append(testList, 1);
   append(testList, 20);
   append(testList, 300);
@@ -333,7 +341,7 @@ Begin
   assert(false, contains(testList, 5));
   WriteLn('PASS');
   DisposeList(testList);
-  WriteLn('cleaned up');
+  WriteLn('List pointer disposed');
 End;
 
 type CircularBuffer = Array[0..24] of Real;
@@ -356,6 +364,7 @@ Begin
   testStrings;
   WriteLn;
   WriteLn('*** Advent Of Code, Day 04, Turbo Pascal ***');
+  WriteLn(MemAvail);
   Assign(inFile, '04.txt');
   Reset(inFile);
   total := 0;
@@ -375,7 +384,7 @@ Begin
   While true Do
     Begin
       c := ReadDay04Line(inFile);
-      If c^.have^.next = Nil Then
+      If ListLen(c^.have) = 0 Then
         GoTo EOFLabel;
       { Preview the card }
       PrintCard(c^);
