@@ -1,17 +1,12 @@
 {    Advent Of Code  2023 - day 04 solution    }
 { (c)2024 RetroFun.pl / Cezar "ikari" Pokorski }
 {                                              }
-{ This program compiles under Free Pascal 3.x  }
-{       (on x86, amd64 and Apple Silicon)      }
-{ as well as under Turbo Pascal v3.00 on CP/M  }
+{        This program compiles under under     }
+{           Turbo Pascal v3.00 on CP/M         }
 {  (tested with Amstrad CPC6128 with CP/M Plus }
 {   and Turbo Pascal 3.00, and on CP/M for Mac }
 {  with Turbo Pascal 3.01)                     }
 Program day04;
-
-{$IF fpc_version > 0}
-Uses crt;
-{$ENDIF}
 
 Type
   TextFile = file Of char;
@@ -363,10 +358,8 @@ Begin
   testStrings;
   WriteLn;
   WriteLn('*** Advent Of Code, Day 04, Turbo Pascal ***');
-{$IFDEF VER30}
   Write('Available memory: ');
   WriteLn(MemAvail);
-{$ENDIF}
   Assign(inFile, '04.txt');
   Reset(inFile);
   total := 0;
@@ -385,9 +378,7 @@ Begin
   { start looping through the file }
   While true Do
     Begin
-      {$IFDEF VER30}
       Mark(mem);
-      {$ENDIF}
       c := ReadDay04Line(inFile);
       If ListLen(c^.have) = 0 Then
         GoTo EOFLabel;
@@ -434,12 +425,11 @@ Begin
       {DisposeList(c^.winning);
       DisposeList(c^.have);
       Dispose(c;}
-      {$IFDEF VER30}
       Release(mem);
-      {$ENDIF}
     End;
 EOFLabel:
   WriteLn('---');
   WriteLn('Part 1 solution:',total:10:0);
   WriteLn('Part 2 solution:',cards:10:0);
 End.
+
