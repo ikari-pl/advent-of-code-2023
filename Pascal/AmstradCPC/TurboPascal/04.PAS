@@ -39,7 +39,7 @@ Card = Record
   have: PNumberList;
 End;
 
-Procedure printCard(var c: Card);
+Procedure printCard(c: Card);
 Begin
   WriteLn('Card ', c.id);
   WriteLn('Winning numbers: ', listToStr(c.winning));
@@ -156,9 +156,7 @@ End;
 Procedure assert(expected: boolean; actual: boolean);
 Begin
   If expected = actual Then
-    Begin
-      Write('.');
-    End
+      Write('.')
   Else
     Begin
       WriteLn('FAIL');
@@ -211,7 +209,7 @@ Var
   len: integer;
 Begin
   len := 0;
-  While l <> Nil Do
+  While (l <> Nil) and (l^.next <> nil) Do
     Begin
       l := l^.next;
       len := len + 1;
@@ -238,16 +236,12 @@ Var
   s: string[100];
   retVal: PCard;
 Begin
-  WriteLn(MemAvail);
   ReadLn(f, line);
-  WriteLn(line);
   simpleSplit(line, '|', left, right);
-  WriteLn('a');
   numbersWeHaveStr := right;
 
   s := left;
   simpleSplit(s, ':', left, right);
-  WriteLn('b');
   cardNoStr := trim(Copy(left, 5, 10));
   winningNumbersStr := Copy(right, 1, 255);
 
@@ -259,13 +253,9 @@ Begin
     halt;
   end;
 
-  WriteLn('allocating PCard');
-  WriteLn(MemAvail);
   new(retVal);
-  WriteLn('allocated');
   winningNumbers := numbersInString(winningNumbersStr);
   haveNumbers := numbersInString(numbersWeHaveStr);
-             WriteLn('d');
   retVal^.id := cardNoInt;
   retVal^.winning := winningNumbers;
   retVal^.have := haveNumbers;
@@ -294,20 +284,18 @@ Var
   numWeHave: PNumberList;
   list: PNumberList;
 Begin
+  countMatches := 0;
   numWeHave := c.have;
   If numWeHave^.next = Nil Then Exit;
 
   sum := 0;
   Repeat
     numWeHave := numWeHave^.next;
-    list := c.winning;
-    If contains(list, numWeHave^.num) Then
-      Begin
+    If contains(c.winning, numWeHave^.num) Then
         { For part 1 of the task, it would be also just enough }
         { If we started sum with 1, shift left by 1 bit here,  }
         { and shift it right by 1 bit at the end.              }
         sum := sum + 1;
-      End { contains winning }
   Until numWeHave^.next = Nil;
   countMatches := sum;
 End;
@@ -321,9 +309,7 @@ Begin
   matches := countMatches(c);
   pts := 0;
   If matches > 0 Then
-    Begin
       pts := 1 shl (matches-1);
-    End;
   pointsOf := pts;
 End;
 
@@ -357,6 +343,7 @@ Var
   ctmIndex: byte;
   i: byte;
   idx: byte;
+  mem: ^integer;
 label EOFLabel;
 Begin
   ClrScr;
@@ -364,6 +351,7 @@ Begin
   testStrings;
   WriteLn;
   WriteLn('*** Advent Of Code, Day 04, Turbo Pascal ***');
+  Write('Available memory: ');
   WriteLn(MemAvail);
   Assign(inFile, '04.txt');
   Reset(inFile);
@@ -383,6 +371,7 @@ Begin
   { start looping through the file }
   While true Do
     Begin
+      Mark(mem);
       c := ReadDay04Line(inFile);
       If ListLen(c^.have) = 0 Then
         GoTo EOFLabel;
@@ -413,6 +402,10 @@ Begin
       { (which is number of points times how many copies of it we got) }
       copies := (copies+1);
       WriteLn('It will win copies of ',p,' cards: ');
+      if p > 25 then begin
+        WriteLn('ok, that''s too much');
+        goto EOFLabel;
+      end;
       For i := 1 To p Do
         Begin
           idx := (ctmIndex + i) Mod 25;
@@ -422,9 +415,10 @@ Begin
       WriteLn('', chr(13), chr(10));
       cardsToMultiply[ctmIndex] := 0;
       ctmIndex := (ctmIndex + 1) Mod 25;
-      DisposeList(c^.winning);
+      {DisposeList(c^.winning);
       DisposeList(c^.have);
-      Dispose(c);
+      Dispose(c;}
+      Release(mem);
     End;
 EOFLabel:
   WriteLn('---');
