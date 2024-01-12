@@ -1,6 +1,17 @@
+{    Advent Of Code  2023 - day 04 solution    }
+{ (c)2024 RetroFun.pl / Cezar "ikari" Pokorski }
+{                                              }
+{ This program compiles under Free Pascal 3.x  }
+{       (on x86, amd64 and Apple Silicon)      }
+{ as well as under Turbo Pascal v3.00 on CP/M  }
+{  (tested with Amstrad CPC6128 with CP/M Plus }
+{   and Turbo Pascal 3.00, and on CP/M for Mac }
+{  with Turbo Pascal 3.01)                     }
 Program day04;
 
-{Uses crt;}
+{$IF fpc_version > 0}
+Uses crt;
+{$ENDIF}
 
 Type
   TextFile = file Of char;
@@ -237,6 +248,7 @@ Var
   retVal: PCard;
 Begin
   ReadLn(f, line);
+  new(retVal);
   simpleSplit(line, '|', left, right);
   numbersWeHaveStr := right;
 
@@ -249,11 +261,12 @@ Begin
   Val(cardNoStr, cardNoInt, code);
   if code <> 0 then
   begin
-    WriteLn('cardNoStr: "',cardNoStr,'", cardNoInt: ',cardNoInt,', code: ',code);
-    halt;
+    { no input? Must have ran out of lines }
+    retVal^.id := 0;
+    retVal^.winning := nil;
+    retVal^.have := nil;
   end;
 
-  new(retVal);
   winningNumbers := numbersInString(winningNumbersStr);
   haveNumbers := numbersInString(numbersWeHaveStr);
   retVal^.id := cardNoInt;
@@ -327,7 +340,6 @@ Begin
   assert(false, contains(testList, 5));
   WriteLn('PASS');
   DisposeList(testList);
-  WriteLn('List pointer disposed');
 End;
 
 type CircularBuffer = Array[0..24] of Real;
@@ -351,8 +363,10 @@ Begin
   testStrings;
   WriteLn;
   WriteLn('*** Advent Of Code, Day 04, Turbo Pascal ***');
+{$IFDEF VER30}
   Write('Available memory: ');
   WriteLn(MemAvail);
+{$ENDIF}
   Assign(inFile, '04.txt');
   Reset(inFile);
   total := 0;
@@ -371,7 +385,9 @@ Begin
   { start looping through the file }
   While true Do
     Begin
+      {$IFDEF VER30}
       Mark(mem);
+      {$ENDIF}
       c := ReadDay04Line(inFile);
       If ListLen(c^.have) = 0 Then
         GoTo EOFLabel;
@@ -418,7 +434,9 @@ Begin
       {DisposeList(c^.winning);
       DisposeList(c^.have);
       Dispose(c;}
+      {$IFDEF VER30}
       Release(mem);
+      {$ENDIF}
     End;
 EOFLabel:
   WriteLn('---');
