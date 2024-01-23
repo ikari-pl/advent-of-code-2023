@@ -19,3 +19,6 @@ For this excercise, the tasks 01-03 are implemented in BBC BASIC, with some rest
 # Pascal?
 
 Task 04 is the first one done in Turbo Pascal.
+It contains a version that compiles with Free Pascal, as well as one that was battle-tested on Amstrad CPC6128 running CP/M Plus and compiled with Turbo Pascal 3.00 - though had to workaround something that looks like a compiler bug regarding `New` and `Dispose` calls. 
+
+![43cf5625f3dfbc95](https://github.com/ikari-pl/advent-of-code-2023/assets/811702/97fa3b8e-0d3e-4889-94b8-9c96836ed6b7)
